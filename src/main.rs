@@ -1,3 +1,5 @@
+mod stock;
+use stock::stocking;
 fn main() {
-    println!("Hello, world!");
+    stocking();
 }
