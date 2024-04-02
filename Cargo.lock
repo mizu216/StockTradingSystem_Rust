@@ -7,9 +7,13 @@ name = "Stock_Trading_System"
 version = "0.1.0"
 dependencies = [
  "amiquip",
+ "bincode",
+ "crossbeam-channel",
  "get_user_input",
  "rand",
  "scheduled-thread-pool",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -85,6 +89,15 @@ name = "autocfg"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1fdabc7756949593fe60f30ec81974b613357de856987752631dea1e3394c80"
+
+[[package]]
+name = "bincode"
+version = "1.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "bitflags"
