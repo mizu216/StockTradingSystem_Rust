@@ -9,14 +9,25 @@ use std::sync::{mpsc::channel, Arc, Mutex};
 use std::time::Duration;
 use std::{thread, vec};
 
+// Port of https://www.rabbitmq.com/tutorials/tutorial-one-python.html. Run this
+// in one shell, and run the hello_world_publish example in another.
 #[derive(Debug, Clone)]
-struct Stock {
+pub struct Stock {
     id:i32,
     name: String,
     v: i32,
 }
 
-pub fn stocking() {
+#[derive(Debug, Clone)]
+pub struct Order {
+    pub(crate) broker: i32,
+    pub(crate)option: String,
+    pub(crate)stock_id: i32,
+    pub(crate)price: i32,
+    pub(crate)status: String,
+}
+
+pub fn stocking(order_list: &Arc<Mutex<Vec<Order>>>) {
     let (sel_s, sel_r) = unbounded();
     let (tx, rx) = channel();
     let sched = ScheduledThreadPool::new(5);
@@ -49,8 +60,6 @@ pub fn stocking() {
     ]));
 
     // create a stock selector task
-    let stock_arc = shared_stock.clone();
-
     sched.execute_at_fixed_rate(
         Duration::from_micros(0),
         Duration::from_secs(1),
@@ -72,12 +81,14 @@ pub fn stocking() {
             loop {
                 let r_stock = receiver.recv().unwrap();
                 let mut rng = rand::thread_rng();
-                let inc = rng.gen_range(0..20);
+                let inc = rng.gen_range(-20..20);
     
                 // Modify the stock directly in the shared vector
                 let mut stocks = stocks_arc.lock().unwrap();
                 let stock = &mut stocks[r_stock];
-                stock.v += inc;
+                if stock.v + inc >0{
+                    stock.v += inc;
+                }
     
                 // Send the index of the modified stock to the broadcaster
                 tx1.send(stock.clone()).unwrap();
@@ -86,7 +97,6 @@ pub fn stocking() {
     }
 
     // sender / broadcaster thread
-
     let (broad_s, broad_r) = unbounded();
     thread::spawn(move || {
         loop {
@@ -99,10 +109,21 @@ pub fn stocking() {
 
     // brocker tasks
     let brocker = broad_r.clone();
+    let order_arc = Arc::clone(&order_list);
     thread::spawn(move || loop {
         let stock = brocker.recv().unwrap();
-        if stock.v >150{
-            println!("BROCKER 1: buying stock {:?}", stock)
+        let mut order_arcs = order_arc.lock().unwrap();
+        for order in order_arcs.iter_mut() {
+            if order.stock_id == stock.id && order.status=="On Going".to_string(){
+                if order.option=="sells".to_string()&& order.price <= stock.v{
+                    order.status = "Completed".to_string();
+                    println!("Broker {:?} haved {:?} stock {:?} at price {:?}. STATUS:{:?}",order.broker,order.option,order.stock_id,stock.v,order.status);
+                }
+                else if order.option=="buys".to_string()&& order.price >= stock.v{
+                    order.status = "Completed".to_string();
+                    println!("Broker {:?} haved {:?} stock {:?} at price {:?}. STATUS:{:?}",order.broker,order.option,order.stock_id,stock.v,order.status);
+                }
+            }
         }
     });
 
