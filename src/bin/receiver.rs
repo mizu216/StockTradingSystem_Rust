@@ -1,7 +1,11 @@
 extern crate crossbeam_channel;
 extern crate rand;
 extern crate scheduled_thread_pool;
-use std::sync::{mpsc::channel, Arc, Mutex};
+extern crate bma_benchmark;
+use bma_benchmark::staged_benchmark_print_for;
+use bma_benchmark::staged_benchmark_finish_current;
+use bma_benchmark::staged_benchmark_start;
+use std::sync::{Arc, Mutex};
 use std::{thread, vec};
 // Port of https://www.rabbitmq.com/tutorials/tutorial-one-python.html. Run this
 // in one shell, and run the hello_world_publish example in another.
@@ -50,7 +54,8 @@ fn receiver(shared_order: &Arc<Mutex<Vec<Order>>>) -> Result<()> {
                 println!("Broker {:?} wants to {:?} stock {:?} at price {:?}. STATUS:{:?}",order.broker,order.option,order.stock_id,order.price,order.status);
                 consumer.ack(delivery)?;
                 let mut shared_orders = shared_order.lock().unwrap();
-                shared_orders.push(order);
+                shared_orders.push(order.clone());
+
             }
             other => {
                 println!("Consumer ended: {:?}", other);

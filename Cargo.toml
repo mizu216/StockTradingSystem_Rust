@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 amiquip = "0.4.2"
 bincode = "1.3.3"
+bma-benchmark = "0.0.24"
 crossbeam-channel = "0.5.12"
 get_user_input = "0.1.1"
 rand = "0.8.5"
