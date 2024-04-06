@@ -137,18 +137,22 @@ pub fn stocking(order_list: &Arc<Mutex<Vec<Order>>>) {
     //broadcaster stock
     let (broad_s, broad_r) = unbounded();
     thread::spawn(move || {
+        //staged_benchmark_start!("Stock Broadcast");//change the loop to for i in 0..20 to test benchmark
         loop {
             let stock = rx.recv().unwrap();
             // broadcast the stock
             println!("Stock Broadcast: {:?}",stock);
             broad_s.send(stock.clone()).unwrap();
         }
+        //staged_benchmark_finish_current!(20);
+        //staged_benchmark_print_for!("Stock Broadcast");
     });
 
     //order manager
     let brocker = broad_r.clone();
     let order_arc = Arc::clone(&order_list);
     thread::spawn(move || {
+        //staged_benchmark_start!("order manager");//change the loop to for i in 0..20 to test benchmark
         loop{
             let stock = brocker.recv().unwrap();
             let mut order_arcs = order_arc.lock().unwrap();
@@ -165,6 +169,8 @@ pub fn stocking(order_list: &Arc<Mutex<Vec<Order>>>) {
                 }
             }
         }
+        //staged_benchmark_finish_current!(20);
+        //staged_benchmark_print_for!("order manager");
     }); 
 
     loop{
